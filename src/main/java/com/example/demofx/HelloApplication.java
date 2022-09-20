@@ -4,8 +4,6 @@ import java.awt.Desktop;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
 import javafx.scene.*;
@@ -26,20 +24,29 @@ import java.nio.file.Files;
 public class HelloApplication extends Application {
 
     private final Desktop desktop = Desktop.getDesktop();
+
+    private final String pathExcel = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoExcel2.png";
+
+    private final String pathTXT = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoTexto.png";
+
+    private final String pathNoExtension = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoSinExtension.png";
+
     private static final double WIDTH = 800;
     private static final double HEIGHT = 600;
 
     private static final double IMG_WIDTH = 100;
     private static final double IMG_HEIGHT = 100;
 
+    private static final double MARGIN = 25;
+
     ObservableList<TableItem> items;
 
     private TableView<TableItem> table;
 
     /* Imagenes */
-    TableItem excel = new TableItem(new ImageView(new Image(new FileInputStream("C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoExcel.png"))));
-    TableItem txt = new TableItem(new ImageView(new Image(new FileInputStream("C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoTexto.jpg"))));
-    TableItem noExtension = new TableItem(new ImageView(new Image(new FileInputStream("C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoSinExtension.png"))));
+    ImageView excel = new ImageView(new Image(new FileInputStream(pathExcel)));
+    ImageView txt = new ImageView(new Image(new FileInputStream(pathTXT)));
+    ImageView noExtension = new ImageView(new Image(new FileInputStream(pathNoExtension)));
 
     public HelloApplication() throws FileNotFoundException {
     }
@@ -53,18 +60,19 @@ public class HelloApplication extends Application {
         items = FXCollections.observableArrayList();
 
         /* Detalle imagenes */
-        excel.getImagen().setFitWidth(IMG_WIDTH);
-        excel.getImagen().setFitHeight(IMG_HEIGHT);
-        txt.getImagen().setFitWidth(IMG_WIDTH);
-        txt.getImagen().setFitHeight(IMG_HEIGHT);
-        noExtension.getImagen().setFitWidth(IMG_WIDTH);
-        noExtension.getImagen().setFitHeight(IMG_HEIGHT);
+        excel.setFitWidth(IMG_WIDTH);
+        excel.setFitHeight(IMG_HEIGHT);
+        txt.setFitWidth(IMG_WIDTH);
+        txt.setFitHeight(IMG_HEIGHT);
+        noExtension.setFitWidth(IMG_WIDTH);
+        noExtension.setFitHeight(IMG_HEIGHT);
 
         /* Barra de herramientas */
         ToolBar toolBar = new ToolBar();
         Button bArchivo = new Button("Archivo");
         toolBar.getItems().add(bArchivo);
         toolBar.getItems().add(new Separator());
+        toolBar.setPrefWidth(WIDTH);
 
         /* Button Events */
         bArchivo.setOnAction(actionEvent -> {
@@ -80,19 +88,25 @@ public class HelloApplication extends Application {
         /* Table View con ficheros */
         table = new TableView<>();
 
-        TableColumn<TableItem, ImageView> column1 = new TableColumn<>("FILES");
-        column1.setPrefWidth(WIDTH);
+        TableColumn<TableItem, ImageView> column1 = new TableColumn<>("FILE EXTENSION");
+        column1.setPrefWidth(IMG_WIDTH);
         column1.setCellValueFactory(new PropertyValueFactory<>("imagen"));
+        TableColumn<TableItem, ImageView> column2 = new TableColumn<>("FILE NAME");
+        column2.setPrefWidth(250);
+        column2.setCellValueFactory(new PropertyValueFactory<>("path"));
 
         table.getColumns().add(column1);
+        table.getColumns().add(column2);
+        table.setPrefWidth(WIDTH-MARGIN*2);
+        table.setLayoutX(MARGIN);
+        table.setLayoutY(MARGIN*2);
 
         /* Scroll Bar */
         ScrollBar sb = new ScrollBar();
         sb.setOrientation(Orientation.VERTICAL);
 
-        VBox vbox = new VBox(toolBar, table);
-        root.getChildren().add(sb);
-        root.getChildren().add(vbox);
+        root.getChildren().add(toolBar);
+        root.getChildren().add(table);
         stage.setTitle("Hello!");
         stage.setScene(scene);
         stage.show();
@@ -108,10 +122,10 @@ public class HelloApplication extends Application {
             String fileType = Files.probeContentType(file.toPath());
 
             switch (fileType) {
-                case "text/plain" -> items.add(txt);
+                case "text/plain" -> items.add(new TableItem(txt, file.getName()));
                 case "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ->
-                        items.add(excel);
-                default -> items.add(noExtension);
+                        items.add(new TableItem(excel, file.getName()));
+                default -> items.add(new TableItem(noExtension, file.getName()));
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -124,8 +138,23 @@ public class HelloApplication extends Application {
 
         private ImageView imagen;
 
-        public TableItem(ImageView img) {
+        private String path;
+
+        public TableItem(ImageView imagen) {
+            this.imagen = imagen;
+        }
+
+        public TableItem(ImageView img, String path) {
             this.imagen = img;
+            this.path = path;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
         }
 
         public ImageView getImagen() {
