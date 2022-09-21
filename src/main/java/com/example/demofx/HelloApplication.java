@@ -11,7 +11,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -24,29 +23,23 @@ import java.nio.file.Files;
 public class HelloApplication extends Application {
 
     private final Desktop desktop = Desktop.getDesktop();
-
     private final String pathExcel = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoExcel2.png";
-
     private final String pathTXT = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoTexto.png";
-
     private final String pathNoExtension = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoSinExtension.png";
-
+    private final String pathBin = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\bin.png";
     private static final double WIDTH = 800;
     private static final double HEIGHT = 600;
-
     private static final double IMG_WIDTH = 100;
     private static final double IMG_HEIGHT = 100;
-
     private static final double MARGIN = 25;
-
     ObservableList<TableItem> items;
-
     private TableView<TableItem> table;
 
     /* Imagenes */
     ImageView excel = new ImageView(new Image(new FileInputStream(pathExcel)));
     ImageView txt = new ImageView(new Image(new FileInputStream(pathTXT)));
     ImageView noExtension = new ImageView(new Image(new FileInputStream(pathNoExtension)));
+    ImageView bin = new ImageView(new Image(new FileInputStream(pathBin)));
 
     public HelloApplication() throws FileNotFoundException {
     }
@@ -66,6 +59,8 @@ public class HelloApplication extends Application {
         txt.setFitHeight(IMG_HEIGHT);
         noExtension.setFitWidth(IMG_WIDTH);
         noExtension.setFitHeight(IMG_HEIGHT);
+        bin.setFitHeight(MARGIN+10);
+        bin.setFitWidth(MARGIN+10);
 
         /* Barra de herramientas */
         ToolBar toolBar = new ToolBar();
@@ -94,9 +89,13 @@ public class HelloApplication extends Application {
         TableColumn<TableItem, ImageView> column2 = new TableColumn<>("FILE NAME");
         column2.setPrefWidth(250);
         column2.setCellValueFactory(new PropertyValueFactory<>("path"));
+        TableColumn<TableItem, ImageView> column3 = new TableColumn<>("");
+        column3.setPrefWidth(60);
+        column3.setCellValueFactory(new PropertyValueFactory<>("button"));
 
         table.getColumns().add(column1);
         table.getColumns().add(column2);
+        table.getColumns().add(column3);
         table.setPrefWidth(WIDTH-MARGIN*2);
         table.setLayoutX(MARGIN);
         table.setLayoutY(MARGIN*2);
@@ -122,23 +121,22 @@ public class HelloApplication extends Application {
             String fileType = Files.probeContentType(file.toPath());
 
             switch (fileType) {
-                case "text/plain" -> items.add(new TableItem(txt, file.getName()));
+                case "text/plain" -> items.add(new TableItem(txt, file.getName(), bin));
                 case "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ->
-                        items.add(new TableItem(excel, file.getName()));
-                default -> items.add(new TableItem(noExtension, file.getName()));
+                        items.add(new TableItem(excel, file.getName(), bin));
+                default -> items.add(new TableItem(noExtension, file.getName(), bin));
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         table.setItems(items);
     }
 
-    public static class TableItem{
+    public class TableItem {
 
         private ImageView imagen;
-
         private String path;
+        private Button button;
 
         public TableItem(ImageView imagen) {
             this.imagen = imagen;
@@ -147,6 +145,12 @@ public class HelloApplication extends Application {
         public TableItem(ImageView img, String path) {
             this.imagen = img;
             this.path = path;
+        }
+
+        public TableItem(ImageView imagen, String path, ImageView bin) {
+            this.imagen = imagen;
+            this.path = path;
+            this.button = createButton(bin);
         }
 
         public String getPath() {
@@ -163,6 +167,27 @@ public class HelloApplication extends Application {
 
         public void setImagen(ImageView imagen) {
             this.imagen = imagen;
+        }
+
+        public Button getButton() {
+            return button;
+        }
+
+        public void setButton(Button button) {
+            this.button = button;
+        }
+
+        public Button createButton(ImageView bin){
+            Button button = new Button();
+            button.setGraphic(bin);
+            button.setPrefWidth(MARGIN+10);
+            button.setPrefHeight(MARGIN+10);
+            button.setOnAction(actionEvent -> {
+                /* Eliminar de la tabla */
+                items.remove(this);
+                table.setItems(items);
+            });
+            return button;
         }
     }
 
