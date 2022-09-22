@@ -5,7 +5,6 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Orientation;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -110,15 +109,54 @@ public class HelloApplication extends Application {
         table.setLayoutX(MARGIN);
         table.setLayoutY(MARGIN*2);
 
-        /* Scroll Bar */
-        ScrollBar sb = new ScrollBar();
-        sb.setOrientation(Orientation.VERTICAL);
+        /* Botón comenzar traspaso */
+        Button bStart = new Button("INICIAR TRASPASO");
+        bStart.setLayoutX(WIDTH/2-100);
+        bStart.setLayoutY(HEIGHT-140);
+        bStart.setPrefWidth(200);
+        bStart.setPrefHeight(100);
+
+        bStart.setOnAction(actionEvent -> {
+            /* Procesos previos a la lectura de ficheros */
+            /* Ordenar por prioridad */
+            ordenarFicheros();
+        });
 
         root.getChildren().add(toolBar);
         root.getChildren().add(table);
+        root.getChildren().add(bStart);
         stage.setTitle("Hello!");
         stage.setScene(scene);
         stage.show();
+    }
+
+    private void ordenarFicheros() {
+        String nombreFichero;
+        ObservableList<TableItem> auxiliar = FXCollections.observableArrayList();
+        for (TableItem file : items) {
+            nombreFichero = file.getPath().toLowerCase();
+            if (nombreFichero.contains("client") || nombreFichero.contains("art") || nombreFichero.contains("prov")) {
+                auxiliar.add(0, file);
+            } else {
+                auxiliar.add(file);
+            }
+        }
+        for (int j = auxiliar.size() - 1; j >= 0; j--) {
+            nombreFichero = auxiliar.get(j).getPath().toLowerCase();
+            if (nombreFichero.contains("fact")) {
+                auxiliar.add(auxiliar.get(j));
+                auxiliar.remove(j);
+            }
+        }
+        for (int j = auxiliar.size() - 1; j >= 0; j--) {
+            nombreFichero = auxiliar.get(j).getPath().toLowerCase();
+            if (nombreFichero.contains("apun") || nombreFichero.contains("iva") || nombreFichero.contains("prevcobr") || nombreFichero.contains("existen") || nombreFichero.contains("compra")) {
+                auxiliar.add(auxiliar.get(j));
+                auxiliar.remove(j);
+            }
+        }
+        items = auxiliar;
+        table.setItems(items);
     }
 
     public static void main(String[] args) {
