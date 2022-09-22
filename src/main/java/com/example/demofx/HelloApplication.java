@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 public class HelloApplication extends Application {
 
@@ -27,10 +28,11 @@ public class HelloApplication extends Application {
     private final String pathTXT = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoTexto.png";
     private final String pathNoExtension = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\iconoSinExtension.png";
     private final String pathBin = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\bin.png";
+    private final String pathLoading = "C:\\Users\\HP\\IdeaProjects\\demoFX\\src\\main\\java\\com\\example\\demofx\\loading.gif";
     private static final double WIDTH = 800;
     private static final double HEIGHT = 600;
-    private static final double IMG_WIDTH = 100;
-    private static final double IMG_HEIGHT = 100;
+    private static final double IMG_WIDTH = 35;
+    private static final double IMG_HEIGHT = 35;
     private static final double MARGIN = 25;
     ObservableList<TableItem> items;
     private TableView<TableItem> table;
@@ -40,6 +42,7 @@ public class HelloApplication extends Application {
     ImageView txt = new ImageView(new Image(new FileInputStream(pathTXT)));
     ImageView noExtension = new ImageView(new Image(new FileInputStream(pathNoExtension)));
     ImageView bin = new ImageView(new Image(new FileInputStream(pathBin)));
+    ImageView gif = new ImageView(new Image(new FileInputStream(pathLoading)));
 
     public HelloApplication() throws FileNotFoundException {
     }
@@ -59,8 +62,10 @@ public class HelloApplication extends Application {
         txt.setFitHeight(IMG_HEIGHT);
         noExtension.setFitWidth(IMG_WIDTH);
         noExtension.setFitHeight(IMG_HEIGHT);
-        bin.setFitHeight(MARGIN+10);
-        bin.setFitWidth(MARGIN+10);
+        bin.setFitHeight(IMG_HEIGHT);
+        bin.setFitWidth(IMG_WIDTH);
+        gif.setFitHeight(IMG_HEIGHT);
+        gif.setFitWidth(IMG_WIDTH);
 
         /* Barra de herramientas */
         ToolBar toolBar = new ToolBar();
@@ -74,17 +79,18 @@ public class HelloApplication extends Application {
             /* File chooser */
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Escoja un archivo para importar.");
-            File file = fileChooser.showOpenDialog(stage);
-            if (file != null) {
-                resetTableView(file);
-            }
+            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"));
+            List<File> files = fileChooser.showOpenMultipleDialog(stage);
+
+            resetTableView(files);
+
         });
 
         /* Table View con ficheros */
         table = new TableView<>();
 
-        TableColumn<TableItem, ImageView> column1 = new TableColumn<>("FILE EXTENSION");
-        column1.setPrefWidth(IMG_WIDTH);
+        TableColumn<TableItem, ImageView> column1 = new TableColumn<>("EXTENSION");
+        column1.setPrefWidth(IMG_WIDTH+5);
         column1.setCellValueFactory(new PropertyValueFactory<>("imagen"));
         TableColumn<TableItem, ImageView> column2 = new TableColumn<>("FILE NAME");
         column2.setPrefWidth(250);
@@ -92,10 +98,14 @@ public class HelloApplication extends Application {
         TableColumn<TableItem, ImageView> column3 = new TableColumn<>("");
         column3.setPrefWidth(60);
         column3.setCellValueFactory(new PropertyValueFactory<>("button"));
+        TableColumn<TableItem, ImageView> column4 = new TableColumn<>("");
+        column4.setPrefWidth(IMG_WIDTH+5);
+        column4.setCellValueFactory(new PropertyValueFactory<>("gif"));
 
         table.getColumns().add(column1);
         table.getColumns().add(column2);
         table.getColumns().add(column3);
+        table.getColumns().add(column4);
         table.setPrefWidth(WIDTH-MARGIN*2);
         table.setLayoutX(MARGIN);
         table.setLayoutY(MARGIN*2);
@@ -115,19 +125,21 @@ public class HelloApplication extends Application {
         launch();
     }
 
-    public void resetTableView(File file) {
+    public void resetTableView(List<File> files) {
 
-        try {
-            String fileType = Files.probeContentType(file.toPath());
+        for (File file : files) {
+            try {
+                String fileType = Files.probeContentType(file.toPath());
 
-            switch (fileType) {
-                case "text/plain" -> items.add(new TableItem(txt, file.getName(), bin));
-                case "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ->
-                        items.add(new TableItem(excel, file.getName(), bin));
-                default -> items.add(new TableItem(noExtension, file.getName(), bin));
+                switch (fileType) {
+                    case "text/plain" -> items.add(new TableItem(new ImageView(new Image(new FileInputStream(pathTXT), IMG_WIDTH, IMG_HEIGHT, true, true)), file.getName(), new ImageView(new Image(new FileInputStream(pathLoading), IMG_WIDTH, IMG_HEIGHT, true, true))));
+                    case "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ->
+                            items.add(new TableItem(new ImageView(new Image(new FileInputStream(pathExcel), IMG_WIDTH, IMG_HEIGHT, true, true)), file.getName(), new ImageView(new Image(new FileInputStream(pathLoading), IMG_WIDTH, IMG_HEIGHT, true, true))));
+                    default -> items.add(new TableItem(new ImageView(new Image(new FileInputStream(pathNoExtension), IMG_WIDTH, IMG_HEIGHT, true, true)), file.getName(), new ImageView(new Image(new FileInputStream(pathLoading), IMG_WIDTH, IMG_HEIGHT, true, true))));
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         table.setItems(items);
     }
@@ -137,6 +149,7 @@ public class HelloApplication extends Application {
         private ImageView imagen;
         private String path;
         private Button button;
+        private ImageView gif;
 
         public TableItem(ImageView imagen) {
             this.imagen = imagen;
@@ -147,10 +160,11 @@ public class HelloApplication extends Application {
             this.path = path;
         }
 
-        public TableItem(ImageView imagen, String path, ImageView bin) {
+        public TableItem(ImageView imagen, String path, ImageView gif) throws FileNotFoundException {
             this.imagen = imagen;
             this.path = path;
-            this.button = createButton(bin);
+            this.button = createButton();
+            this.gif = gif;
         }
 
         public String getPath() {
@@ -177,11 +191,19 @@ public class HelloApplication extends Application {
             this.button = button;
         }
 
-        public Button createButton(ImageView bin){
+        public ImageView getGif() {
+            return gif;
+        }
+
+        public void setGif(ImageView gif) {
+            this.gif = gif;
+        }
+
+        public Button createButton() throws FileNotFoundException {
             Button button = new Button();
-            button.setGraphic(bin);
-            button.setPrefWidth(MARGIN+10);
-            button.setPrefHeight(MARGIN+10);
+            button.setGraphic(new ImageView(new Image(new FileInputStream(pathBin), IMG_WIDTH, IMG_HEIGHT, true, true)));
+            button.setPrefWidth(IMG_WIDTH);
+            button.setPrefHeight(IMG_HEIGHT);
             button.setOnAction(actionEvent -> {
                 /* Eliminar de la tabla */
                 items.remove(this);
